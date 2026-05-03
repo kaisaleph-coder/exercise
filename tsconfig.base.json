@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@workout/shared": ["packages/shared/src/index.ts"],
+      "@workout/importer": ["packages/importer/src/index.ts"],
+      "@workout/analytics": ["packages/analytics/src/index.ts"],
+      "@workout/progression": ["packages/progression/src/index.ts"],
+      "@workout/sync": ["packages/sync/src/index.ts"],
+      "@workout/export": ["packages/export/src/index.ts"]
+    }
+  }
+}

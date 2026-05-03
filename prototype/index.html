@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Workout PWA Interactive Preview v2</title>
+  <meta name="description" content="Interactive v2 pre-development prototype for workout logging PWA" />
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --surface: #ffffff;
+      --surface-2: #eef2f8;
+      --surface-3: #e4e9f2;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #d8dee9;
+      --strong-line: #b8c3d4;
+      --accent: #3157ff;
+      --accent-rgb: 49, 87, 255;
+      --good: #16a34a;
+      --warn: #d97706;
+      --danger: #dc2626;
+      --shadow: 0 22px 70px rgba(15, 23, 42, .12);
+      --radius: 18px;
+      --button-scale: 1;
+      --font-scale: 1;
+      --density-pad: 16px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+      --chest: #ef4444;
+      --back: #2563eb;
+      --shoulders: #f59e0b;
+      --biceps: #8b5cf6;
+      --triceps: #06b6d4;
+      --core: #10b981;
+      --legs: #84cc16;
+    }
+    [data-theme="dark"] {
+      --bg: #090e1a;
+      --surface: #111827;
+      --surface-2: #172033;
+      --surface-3: #202a3c;
+      --text: #f8fafc;
+      --muted: #a1adbd;
+      --line: #2b3649;
+      --strong-line: #40506a;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .34);
+    }
+    [data-density="compact"] { --density-pad: 11px; }
+    [data-density="comfortable"] { --density-pad: 18px; }
+    [data-button-size="large"] { --button-scale: 1.12; }
+    [data-button-size="small"] { --button-scale: .88; }
+    [data-font-scale="large"] { --font-scale: 1.08; }
+    [data-font-scale="small"] { --font-scale: .94; }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(var(--accent-rgb), .16), transparent 30rem),
+        radial-gradient(circle at bottom right, rgba(16, 185, 129, .10), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: calc(16px * var(--font-scale));
+      line-height: 1.45;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    input, select, textarea { color: var(--text); }
+    .app-shell { width: min(1480px, 100%); margin: 0 auto; padding: 18px; }
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .brand { display:flex; align-items:center; gap: 12px; min-width: 0; }
+    .logo {
+      width: 46px; height: 46px; border-radius: 15px;
+      background: linear-gradient(135deg, var(--accent), #16a34a);
+      color: #fff; display:grid; place-items:center; font-weight: 900; letter-spacing: -.04em;
+      box-shadow: 0 13px 30px rgba(var(--accent-rgb), .25);
+      flex: 0 0 auto;
+    }
+    .brand h1 { margin: 0; font-size: 1.26rem; letter-spacing: -.04em; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: .86rem; }
+    .toolbar { display:flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items:center; }
+
+    .timer-ribbon {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      margin: 0 0 12px;
+      border: 1px solid rgba(var(--accent-rgb), .30);
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), .14), rgba(16,185,129,.12)), var(--surface);
+      box-shadow: var(--shadow);
+      border-radius: 18px;
+      padding: 10px 12px;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .timer-ribbon.active { display: flex; }
+    .timer-pill {
+      display:inline-flex; align-items:center; gap: 7px;
+      border: 1px solid var(--line); background: rgba(var(--accent-rgb), .08);
+      border-radius: 999px; padding: 7px 10px; font-variant-numeric: tabular-nums;
+      font-weight: 800; white-space: nowrap;
+    }
+    .timer-ribbon .grow { flex: 1 1 280px; min-width: 0; }
+    .timer-ribbon .current { color: var(--muted); font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .layout {
+      display:grid;
+      grid-template-columns: 235px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .device-phone .layout { width: min(430px, 100%); margin: 0 auto; display:block; }
+    .device-phone .app-shell { padding: 10px; }
+    .device-phone .topbar { grid-template-columns: 1fr; }
+    .device-phone .toolbar { justify-content: flex-start; }
+    .device-phone .timer-ribbon { border-radius: 14px; }
+
+    .sidebar {
+      position: sticky; top: 12px;
+      background: rgba(255,255,255,.66);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+    [data-theme="dark"] .sidebar { background: rgba(17,24,39,.76); }
+    .device-phone .sidebar { position: static; margin-bottom: 12px; border-radius: 16px; padding: 8px; }
+    .nav { display:grid; gap: 7px; }
+    .device-phone .nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x:auto; padding-bottom: 4px; }
+    .nav button {
+      display:flex; justify-content:flex-start; align-items:center; gap: 9px;
+      width:100%; border: 1px solid transparent; border-radius: 14px;
+      padding: 10px 11px; background: transparent; color: var(--muted); text-align:left;
+    }
+    .nav button:hover, .nav button.active { color: var(--text); background: rgba(var(--accent-rgb), .09); border-color: rgba(var(--accent-rgb), .25); }
+    .device-phone .nav button { width:auto; white-space: nowrap; font-size: .82rem; padding: 8px 10px; }
+    .nav-dot { width: 8px; height: 8px; border-radius:999px; background: var(--strong-line); }
+    .nav button.active .nav-dot { background: var(--accent); }
+    .sidebar-card { margin-top: 12px; padding: 12px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--line); }
+    .device-phone .sidebar-card { display:none; }
+
+    .main {
+      min-width: 0;
+      background: rgba(255,255,255,.44);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    [data-theme="dark"] .main { background: rgba(17,24,39,.55); }
+    .device-phone .main { border-radius: 17px; padding: 12px; }
+    .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; margin-bottom: 14px; }
+    .device-phone .page-head { display:block; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .13em; font-size: .72rem; font-weight: 900; }
+    h2 { margin: 3px 0 6px; font-size: 1.8rem; letter-spacing: -.04em; }
+    .device-phone h2 { font-size: 1.35rem; }
+    h3 { margin: 0 0 9px; font-size: 1.05rem; letter-spacing: -.02em; }
+    p { margin: 0; color: var(--muted); }
+    .head-actions { display:flex; flex-wrap:wrap; gap: 8px; justify-content:flex-end; }
+    .device-phone .head-actions { justify-content:flex-start; margin-top: 10px; }
+
+    .grid { display:grid; gap: 12px; }
+    .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .device-phone .cols-2, .device-phone .cols-3, .device-phone .cols-4 { grid-template-columns: 1fr; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--density-pad);
+      box-shadow: 0 8px 26px rgba(15,23,42,.06);
+    }
+    [data-theme="dark"] .card { box-shadow: 0 8px 26px rgba(0,0,0,.15); }
+    .compact { padding: 10px; border-radius: 14px; }
+    .stack { display:grid; gap: 12px; }
+    .row { display:flex; align-items:center; gap: 8px; flex-wrap:wrap; }
+    .between { display:flex; justify-content:space-between; align-items:center; gap: 10px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .82rem; }
+    .mono { font-variant-numeric: tabular-nums; }
+    .hidden { display:none !important; }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--text);
+      border-radius: 12px;
+      min-height: calc(36px * var(--button-scale));
+      padding: calc(8px * var(--button-scale)) calc(11px * var(--button-scale));
+      display:inline-flex; align-items:center; justify-content:center; gap: 6px;
+      transition: .15s ease;
+    }
+    .btn:hover { border-color: rgba(var(--accent-rgb), .48); transform: translateY(-1px); }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.good { background: rgba(22,163,74,.14); border-color: rgba(22,163,74,.32); color: var(--text); }
+    .btn.warn { background: rgba(217,119,6,.13); border-color: rgba(217,119,6,.33); }
+    .btn.danger { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.33); }
+    .btn.ghost { background: transparent; }
+    .btn.small { min-height: 29px; padding: 5px 8px; border-radius: 10px; font-size: .82rem; }
+    .btn.active { outline: 2px solid rgba(var(--accent-rgb), .32); }
+    .btn[disabled] { opacity: .55; cursor:not-allowed; transform:none; }
+
+    .pill { display:inline-flex; align-items:center; gap: 6px; border-radius: 999px; padding: 5px 9px; font-size: .78rem; background: var(--surface-2); border: 1px solid var(--line); white-space:nowrap; }
+    .pill.good { background: rgba(22,163,74,.12); border-color: rgba(22,163,74,.30); color: #15803d; }
+    [data-theme="dark"] .pill.good { color: #bbf7d0; }
+    .pill.warn { background: rgba(217,119,6,.12); border-color: rgba(217,119,6,.30); color:#b45309; }
+    [data-theme="dark"] .pill.warn { color:#fed7aa; }
+    .pill.danger { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.30); color:#b91c1c; }
+    [data-theme="dark"] .pill.danger { color:#fecaca; }
+    .pill.accent { background: rgba(var(--accent-rgb), .11); border-color: rgba(var(--accent-rgb), .28); color: var(--accent); }
+
+    .field { display:grid; gap: 5px; }
+    .field label, label.field { color: var(--muted); font-size: .82rem; font-weight: 700; }
+    .input, .select, .textarea {
+      width:100%; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 10px; outline: none;
+    }
+    .textarea { min-height: 78px; resize: vertical; }
+    .input:focus, .select:focus, .textarea:focus { border-color: rgba(var(--accent-rgb), .55); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .10); }
+    .input.short { max-width: 92px; }
+
+    .metric { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+    .metric .label { color: var(--muted); font-size: .78rem; }
+    .metric .value { font-size: 1.55rem; font-weight: 900; margin-top: 4px; letter-spacing: -.04em; }
+    .metric .sub { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+
+    .table-wrap { overflow:auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 9px; text-align:left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
+    tr.selected-row td { background: rgba(var(--accent-rgb), .08); }
+
+    .group-border { border-left: 7px solid var(--group-color); }
+    .group-band { display:inline-flex; align-items:center; gap: 6px; }
+    .group-swatch { width: 10px; height:10px; border-radius:999px; background: var(--group-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--group-color) 18%, transparent); }
+    .group-Chest { --group-color: var(--chest); }
+    .group-Back { --group-color: var(--back); }
+    .group-Shoulders { --group-color: var(--shoulders); }
+    .group-Biceps { --group-color: var(--biceps); }
+    .group-Triceps { --group-color: var(--triceps); }
+    .group-Core { --group-color: var(--core); }
+    .group-Legs { --group-color: var(--legs); }
+
+    .exercise-card { position: relative; transition: .15s ease; }
+    .exercise-card.selected { outline: 3px solid color-mix(in srgb, var(--group-color) 38%, transparent); box-shadow: 0 16px 34px color-mix(in srgb, var(--group-color) 13%, transparent); }
+    .exercise-card.dragging, .program-day.dragging, .program-ex-row.dragging { opacity:.55; transform: scale(.99); }
+    .drag-handle { cursor: grab; color: var(--muted); user-select:none; }
+    .drag-target { outline: 2px dashed rgba(var(--accent-rgb), .45); outline-offset: 3px; }
+    .exercise-actions { display:flex; align-items:center; gap: 7px; flex-wrap:wrap; }
+    .set-list { display:grid; gap: 8px; }
+    .set-row {
+      border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); padding: 9px;
+      display:grid; grid-template-columns: 32px 1fr auto; gap: 9px; align-items:center;
+    }
+    .device-phone .set-row { grid-template-columns: 28px 1fr; }
+    .set-row.complete { background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.24); }
+    .set-main { display:grid; grid-template-columns: repeat(5, minmax(80px, 1fr)); gap: 8px; align-items:end; }
+    .device-phone .set-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .set-advanced { grid-column: 2 / -1; padding-top: 8px; display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+    .device-phone .set-advanced { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; }
+    .set-actions { display:flex; gap: 6px; flex-wrap:wrap; justify-content:flex-end; }
+    .device-phone .set-actions { grid-column: 1 / -1; justify-content:flex-start; }
+    .section-toggle { display:flex; align-items:center; gap: 6px; color: var(--muted); font-size: .83rem; }
+    .check { width: 18px; height:18px; }
+
+    .program-board { display:grid; grid-template-columns: 340px 1fr; gap: 12px; }
+    .device-phone .program-board { grid-template-columns: 1fr; }
+    .day-list { display:grid; gap: 8px; }
+    .program-day { padding: 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); display:flex; align-items:center; justify-content:space-between; gap: 8px; }
+    .program-day.selected { border-color: rgba(var(--accent-rgb), .50); background: rgba(var(--accent-rgb), .09); }
+    .program-ex-row { padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); display:grid; grid-template-columns: 32px 1fr auto; gap: 8px; align-items:center; }
+    .device-phone .program-ex-row { grid-template-columns: 28px 1fr; }
+
+    .bar-row { display:grid; grid-template-columns: 120px 1fr 88px; gap: 9px; align-items:center; margin: 9px 0; }
+    .device-phone .bar-row { grid-template-columns: 88px 1fr 62px; }
+    .bar-track { height: 12px; border-radius: 999px; background: var(--surface-3); overflow:hidden; }
+    .bar-fill { height:100%; border-radius:999px; background: linear-gradient(90deg, var(--accent), #16a34a); }
+
+    .modal-backdrop { position: fixed; inset:0; z-index: 80; display:grid; place-items:center; background: rgba(2,6,23,.62); backdrop-filter: blur(8px); padding: 18px; }
+    .modal { width: min(760px, 100%); max-height: min(780px, 92vh); overflow:auto; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 18px; }
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index:90; border:1px solid var(--line); background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 12px 14px; max-width: min(420px, calc(100vw - 36px)); }
+    .feedback-drawer { position:fixed; right: 18px; top: 76px; z-index:70; width: min(420px, calc(100vw - 36px)); background: var(--surface); border:1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); padding: 14px; }
+    .feedback-drawer.closed { display:none; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:.78rem; padding:2px 6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:7px; background: var(--surface-2); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x:auto; }
+      .nav button { width:auto; white-space:nowrap; }
+      .sidebar-card { display:none; }
+      .cols-2,.cols-3,.cols-4 { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr; }
+      .toolbar { justify-content:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+  const STORAGE_KEY = 'workoutPwaInteractivePreview.v2';
+
+  const groups = ['Chest','Back','Shoulders','Biceps','Triceps','Core','Legs'];
+  const navItems = [
+    ['dashboard','Dashboard'], ['workout','Workout'], ['program','Program'], ['progression','Progression'],
+    ['import','Import Review'], ['analytics','Analytics'], ['devices','Devices'], ['settings','Settings']
+  ];
+
+  const nowIso = () => new Date().toISOString();
+  const uid = (prefix='id') => prefix + '_' + Math.random().toString(36).slice(2, 9);
+  const escapeHtml = (v) => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmt = (n, d=0) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits:d, minimumFractionDigits:d });
+  const fmtSeconds = (seconds) => {
+    seconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
+    return h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`;
+  };
+  const slugGroup = (g) => `group-${String(g || '').replace(/[^A-Za-z]/g,'')}`;
+
+  function defaultExerciseDb() {
+    return [
+      {id:'incline-db-press', name:'Incline DB Press', group:'Chest', equipment:'dumbbell', unilateral:false, bodyweight:false, increment:2.5, low:8, high:12},
+      {id:'pushups', name:'Pushups', group:'Chest', equipment:'bodyweight', unilateral:false, bodyweight:true, increment:0, low:15, high:30},
+      {id:'cable-fly', name:'Cable Fly', group:'Chest', equipment:'cable', unilateral:false, bodyweight:false, increment:2.5, low:10, high:15},
+      {id:'lat-pulldown', name:'Lat Pulldown', group:'Back', equipment:'cable', unilateral:false, bodyweight:false, increment:2.5, low:8, high:12},
+      {id:'cable-row', name:'Cable Row', group:'Back', equipment:'cable', unilateral:false, bodyweight:false, increment:2.5, low:8, high:12},
+      {id:'pullups', name:'Pullups', group:'Back', equipment:'bodyweight', unilateral:false, bodyweight:true, increment:0, low:5, high:12},
+      {id:'lateral-raise', name:'DB Lateral Raise', group:'Shoulders', equipment:'dumbbell', unilateral:false, bodyweight:false, increment:2.5, low:12, high:20},
+      {id:'rear-delt-fly', name:'Rear Delt Fly', group:'Shoulders', equipment:'machine', unilateral:false, bodyweight:false, increment:2.5, low:12, high:20},
+      {id:'incline-db-curl', name:'Incline DB Curl', group:'Biceps', equipment:'dumbbell', unilateral:false, bodyweight:false, increment:2.5, low:10, high:15},
+      {id:'bayesian-cable-curl', name:'Bayesian Cable Curl', group:'Biceps', equipment:'cable', unilateral:true, bodyweight:false, increment:2.5, low:10, high:15},
+      {id:'triceps-pressdown', name:'Triceps Pressdown', group:'Triceps', equipment:'cable', unilateral:false, bodyweight:false, increment:2.5, low:10, high:15},
+      {id:'overhead-extension', name:'Overhead Extension', group:'Triceps', equipment:'dumbbell', unilateral:false, bodyweight:false, increment:2.5, low:10, high:15},
+      {id:'cable-crunch', name:'Cable Crunch', group:'Core', equipment:'cable', unilateral:false, bodyweight:false, increment:2.5, low:10, high:20},
+      {id:'plank', name:'Plank', group:'Core', equipment:'bodyweight', unilateral:false, bodyweight:true, increment:0, low:30, high:90},
+      {id:'bulgarian-split-squat', name:'Bulgarian Split Squat', group:'Legs', equipment:'dumbbell', unilateral:true, bodyweight:false, increment:2.5, low:8, high:12},
+      {id:'rdl', name:'Romanian Deadlift', group:'Legs', equipment:'barbell', unilateral:false, bodyweight:false, increment:5, low:6, high:10},
+      {id:'leg-extension', name:'Leg Extension', group:'Legs', equipment:'machine', unilateral:false, bodyweight:false, increment:2.5, low:10, high:15}
+    ];
+  }
+
+  function defaultState() {
+    const exerciseDb = defaultExerciseDb();
+    const workoutExercises = [
+      workoutExercise('incline-db-press', [[12,50,true],[10,50,true],[9,50,false]], 'Cycle 36: 12/10/9 @ 50 lb', 'At gym. Smooth reps.', 1),
+      workoutExercise('pushups', [[24,150,false],[20,150,false],[17,150,false]], 'Cycle 36: 24/20/17 bodyweight reps', 'Bodyweight/calisthenics. Exclude from resistance volume.', 2),
+      workoutExercise('incline-db-curl', [[14,17.5,true],[13,17.5,true],[14,17.5,false],[14,17.5,false]], 'Cycle 36: 14/13/14/14 @ 17.5 lb', 'At home. Controlled eccentric.', 3),
+      workoutExercise('bayesian-cable-curl', [[12,12.5,false],[11,12.5,false],[10,12.5,false]], 'Cycle 36: 12/11/10 @ 12.5 lb each side', 'Cable machine reference location. Unilateral.', 4),
+      workoutExercise('bulgarian-split-squat', [[10,25,false],[10,25,false],[9,25,false]], 'Cycle 35: 10/10/9 @ 25 lb', 'Unilateral movement. Double volume in analytics.', 5)
+    ];
+    const recommendations = {};
+    workoutExercises.forEach(we => recommendations[we.id] = baseRecommendation(we, exerciseDb));
+    return {
+      version: 2,
+      screen: 'dashboard',
+      deviceMode: 'desktop',
+      theme: 'dark',
+      accent: '#3157ff',
+      density: 'comfortable',
+      buttonSize: 'normal',
+      fontScale: 'normal',
+      online: true,
+      pendingChanges: 0,
+      toast: null,
+      feedbackOpen: false,
+      feedbackDraft: '',
+      feedback: [],
+      bodyweight: 150,
+      workout: {
+        cycle: 37,
+        day: 1,
+        date: '2026-05-03',
+        location: 'Home/Gym selectable',
+        status: 'in_progress',
+        notes: 'Workout-specific notes live here. Example: home session, limited cable access, 90 second rests.',
+        startedAt: null,
+        endedAt: null,
+        selectedExerciseId: workoutExercises[0].id,
+        collapseCompletedExercises: false,
+        collapseCompletedSets: false,
+        exercises: workoutExercises,
+        activeRest: null
+      },
+      program: {
+        selectedDayId: 'day-1',
+        selectedExerciseId: null,
+        days: [
+          {id:'day-1', day:1, title:'Chest + Biceps', status:'training', notes:'Default from current cycle.', exercises:['incline-db-press','pushups','incline-db-curl','bayesian-cable-curl']},
+          {id:'day-2', day:2, title:'Back + Triceps', status:'training', notes:'Pull + arms.', exercises:['lat-pulldown','cable-row','triceps-pressdown','overhead-extension']},
+          {id:'day-3', day:3, title:'Rest / Mobility', status:'rest', notes:'Recovery day.', exercises:[]},
+          {id:'day-4', day:4, title:'Shoulders + Core', status:'training', notes:'Delts and core.', exercises:['lateral-raise','rear-delt-fly','cable-crunch','plank']},
+          {id:'day-5', day:5, title:'Legs', status:'training', notes:'Lower body.', exercises:['bulgarian-split-squat','rdl','leg-extension']}
+        ]
+      },
+      progression: {
+        skipCycle: false,
+        selectedRuleScope: 'exercise',
+        recommendations,
+        log: [
+          {id:uid('plog'), at:'2026-04-26', cycle:36, exercise:'Incline DB Curl', action:'Accepted', detail:'Kept 17.5 lb, raised lowest target by 1 rep.', usedInAnalytics:true},
+          {id:uid('plog'), at:'2026-04-27', cycle:36, exercise:'Pushups', action:'Bodyweight progression', detail:'Reps-only progression; excluded from resistance tonnage.', usedInAnalytics:true}
+        ]
+      },
+      importReview: {
+        committed:false,
+        aliases:[
+          {id:'a1', raw:'Incline DB curl', canonical:'Incline DB Curl', confidence:98, review:false},
+          {id:'a2', raw:'Bayesian Curls', canonical:'Bayesian Cable Curl', confidence:84, review:true},
+          {id:'a3', raw:'Calesthenics', canonical:'Bodyweight / Calisthenics', confidence:72, review:true},
+          {id:'a4', raw:'Shoulder - Rear Delts', canonical:'Shoulders', confidence:91, review:false}
+        ],
+        warnings:[
+          {id:'w1', row:1758, type:'date_serial_zero', severity:'high', text:'Deleted from active import. Preserved only as rejected audit record.', status:'review'},
+          {id:'w2', row:122, type:'formula_mismatch', severity:'medium', text:'Old volume formula referenced a different row. App recomputes clean total.', status:'review'},
+          {id:'w3', row:2110, type:'volume_mismatch', severity:'medium', text:'Visible source volume differs from set calculation.', status:'review'},
+          {id:'w4', row:2093, type:'template_ignored', severity:'low', text:'Rows without cycle/day/date treated as prior templates and disregarded.', status:'resolved'}
+        ]
+      },
+      analytics: { lookback: 12, trackedExerciseId: 'incline-db-curl', metric:'volume' },
+      devices: {
+        sessions:[
+          {id:'phone', label:'Android PWA', type:'mobile', status:'active', lastSeen:'now', canTerminate:true},
+          {id:'browser', label:'Chrome browser', type:'web', status:'active', lastSeen:'18 sec ago', canTerminate:true}
+        ],
+        conflict:{open:false, entity:'Incline DB Curl · Set 3', mobile:'14 reps @ 17.5 lb, failure tag', browser:'13 reps @ 17.5 lb, no tag', resolved:false, resolution:null}
+      },
+      settings: {
+        sessionTiming:'first_to_last',
+        autoRest:true,
+        defaultRestSeconds:90,
+        buttonLayout:'balanced',
+        showLargeCompleteButton:true,
+        showCompactSetRows:false,
+        persistentTimerRibbon:true,
+        exerciseGroupBadges:true,
+        themeMode:'dark',
+        exportTarget:'Excel download; Drive/OneDrive backup later'
+      },
+      exerciseDb
+    };
+  }
+
+  function workoutExercise(exerciseId, setPairs, last, note, order) {
+    return {
+      id: uid('we'), exerciseId, order, last, note,
+      collapsed:false, completed:false, showSets:true, showCompletedSets:true,
+      sets: setPairs.map((p, i) => ({id:uid('set'), index:i+1, reps:p[0], load:p[1], complete:!!p[2], type:'standard', rir:'', rpe:'', note:'', collapsed:false, start:null, end:p[2] ? nowIso() : null, restAfter:p[2] ? 75 + i*12 : null}))
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      if (!parsed || parsed.version !== 2) return defaultState();
+      return parsed;
+    } catch { return defaultState(); }
+  }
+  let state = loadState();
+
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function mutate(fn, message) { fn(); state.pendingChanges += 1; saveState(); render(); if (message) toast(message); }
+  function liveUpdate(fn) { fn(); state.pendingChanges += 1; saveState(); }
+  function toast(message) { state.toast = message; saveState(); renderToast(); window.clearTimeout(window.__toast); window.__toast = setTimeout(() => { state.toast = null; saveState(); renderToast(); }, 3200); }
+  function exercise(id) { return state.exerciseDb.find(e => e.id === id) || state.exerciseDb[0]; }
+  function selectedWorkoutExercise() { return state.workout.exercises.find(we => we.id === state.workout.selectedExerciseId) || state.workout.exercises[0]; }
+  function selectedProgramDay() { return state.program.days.find(d => d.id === state.program.selectedDayId) || state.program.days[0]; }
+  function baseRecommendation(we, db=state.exerciseDb) {
+    const ex = db.find(e => e.id === we.exerciseId) || db[0];
+    const completed = (we.sets || []).filter(s => s.complete);
+    const load = Math.max(0, ...(we.sets || []).map(s => Number(s.load)||0));
+    const minRep = completed.length ? Math.min(...completed.map(s => Number(s.reps)||0)) : ex.low;
+    const hitTop = completed.length >= (we.sets || []).length && completed.every(s => (Number(s.reps)||0) >= ex.high);
+    if (ex.bodyweight) return {sets: (we.sets || []).length, reps:`${Math.min(ex.high, minRep+1)}-${ex.high}`, load:'reps only', reason:'Bodyweight/calisthenics progress by reps or density and stay outside resistance volume.', edited:false, accepted:false};
+    if (hitTop) return {sets:(we.sets || []).length, reps:String(ex.low), load:fmt(load + ex.increment, 1), reason:`All sets reached ${ex.high}; increase by ${ex.increment} lb.`, edited:false, accepted:false};
+    return {sets:(we.sets || []).length, reps:`raise lowest to ${Math.min(ex.high, minRep+1)}`, load:fmt(load, 1), reason:'Rep-first/double progression: add reps before increasing load.', edited:false, accepted:false};
+  }
+
+  function resistanceVolume(we) {
+    const ex = exercise(we.exerciseId);
+    if (ex.bodyweight) return 0;
+    const raw = we.sets.reduce((sum, s) => sum + ((s.complete ? 1 : 0) * (Number(s.reps)||0) * (Number(s.load)||0)), 0);
+    return raw * (ex.unilateral ? 2 : 1);
+  }
+  function bodyweightReps(we) {
+    const ex = exercise(we.exerciseId);
+    if (!ex.bodyweight) return 0;
+    return we.sets.reduce((sum, s) => sum + ((s.complete ? 1 : 0) * (Number(s.reps)||0)), 0);
+  }
+  function completedSets(we) { return we.sets.filter(s => s.complete).length; }
+  function isExerciseComplete(we) { return we.completed || (we.sets.length > 0 && we.sets.every(s => s.complete)); }
+  function workoutStats() {
+    const totalSets = state.workout.exercises.reduce((s,we)=>s+completedSets(we),0);
+    const plannedSets = state.workout.exercises.reduce((s,we)=>s+we.sets.length,0);
+    const volume = state.workout.exercises.reduce((s,we)=>s+resistanceVolume(we),0);
+    const bw = state.workout.exercises.reduce((s,we)=>s+bodyweightReps(we),0);
+    const completeExercises = state.workout.exercises.filter(isExerciseComplete).length;
+    return {totalSets, plannedSets, volume, bw, completeExercises};
+  }
+  function activeWorkoutSeconds() {
+    if (!state.workout.startedAt) return 0;
+    const end = state.workout.endedAt ? new Date(state.workout.endedAt).getTime() : Date.now();
+    return (end - new Date(state.workout.startedAt).getTime()) / 1000;
+  }
+  function activeRestSeconds() {
+    const r = state.workout.activeRest;
+    if (!r || !r.startedAt) return 0;
+    return (Date.now() - new Date(r.startedAt).getTime()) / 1000;
+  }
+  function activeRestRemaining() {
+    const r = state.workout.activeRest;
+    if (!r) return 0;
+    return Math.max(0, Number(r.durationSeconds || state.settings.defaultRestSeconds) - activeRestSeconds());
+  }
+  function parseTags(text) {
+    const t = String(text || '').toLowerCase();
+    const tags = [];
+    if (/at home|\bhome\b/.test(t)) tags.push(['location','home']);
+    if (/at gym|\bgym\b/.test(t)) tags.push(['location','gym']);
+    if (/cable machine|\bcable\b/.test(t)) tags.push(['equipment','cable machine']);
+    if (/failure|to failure/.test(t)) tags.push(['set','failure']);
+    if (/myo ?reps?|myo-reps?/.test(t)) tags.push(['set','myoreps']);
+    if (/drop ?set/.test(t)) tags.push(['set','drop set']);
+    if (/partial|partial rom/.test(t)) tags.push(['set','partials']);
+    if (/pain|ache|injur|strain|hurt/.test(t)) tags.push(['pain','pain/injury']);
+    return tags;
+  }
+  function setAccent(hex) {
+    const cleaned = String(hex || '#3157ff');
+    document.documentElement.style.setProperty('--accent', cleaned);
+    const r = parseInt(cleaned.slice(1,3),16), g = parseInt(cleaned.slice(3,5),16), b = parseInt(cleaned.slice(5,7),16);
+    if (!Number.isNaN(r)) document.documentElement.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`);
+  }
+
+  function render() {
+    const app = document.getElementById('app');
+    document.body.dataset.theme = state.theme;
+    document.body.dataset.density = state.density;
+    document.body.dataset.buttonSize = state.buttonSize;
+    document.body.dataset.fontScale = state.fontScale;
+    setAccent(state.accent);
+    app.innerHTML = `
+      <div class="app-shell ${state.deviceMode === 'phone' ? 'device-phone' : ''}">
+        ${renderTopbar()}
+        ${renderTimerRibbon()}
+        <div class="layout">
+          <aside class="sidebar">
+            <nav class="nav">${navItems.map(([id,label]) => `<button class="${state.screen === id ? 'active' : ''}" data-action="nav" data-screen="${id}"><span class="nav-dot"></span>${label}</button>`).join('')}</nav>
+            ${renderSidebarCard()}
+          </aside>
+          <main class="main">${renderScreen()}</main>
+        </div>
+      </div>
+      ${state.feedbackOpen ? renderFeedbackDrawer() : ''}
+      <div id="toastHost"></div>
+      ${state.devices.conflict.open ? renderConflictModal() : ''}
+    `;
+    renderToast();
+    updateTimers();
+  }
+
+  function renderTopbar() {
+    return `<div class="topbar">
+      <div class="brand"><div class="logo">WL</div><div><h1>Workout Logger PWA · v2 Preview</h1><p>Interactive design pass before implementation. Changes persist in this browser.</p></div></div>
+      <div class="toolbar">
+        <button class="btn ${state.online ? 'good' : 'warn'}" data-action="toggleOnline">${state.online ? 'Online' : 'Offline'}</button>
+        <button class="btn" data-action="toggleDevice">${state.deviceMode === 'phone' ? 'Desktop preview' : 'Phone preview'}</button>
+        <button class="btn" data-action="toggleTheme">${state.theme === 'dark' ? 'Light' : 'Dark'}</button>
+        <button class="btn" data-action="toggleFeedback">Feedback</button>
+        <button class="btn danger" data-action="resetDemo">Reset demo</button>
+      </div>
+    </div>`;
+  }
+
+  function renderTimerRibbon() {
+    const visible = state.workout.startedAt && state.settings.persistentTimerRibbon;
+    const we = selectedWorkoutExercise();
+    const ex = we ? exercise(we.exerciseId) : null;
+    const rest = state.workout.activeRest;
+    const restText = rest ? (activeRestRemaining() > 0 ? `Rest ${fmtSeconds(activeRestRemaining())}` : 'Rest complete') : 'No active rest';
+    return `<div class="timer-ribbon ${visible ? 'active' : ''}" id="timerRibbon">
+      <span class="timer-pill">Session <span id="globalSessionTimer">${fmtSeconds(activeWorkoutSeconds())}</span></span>
+      <span class="timer-pill">${restText}</span>
+      <div class="grow"><div class="current">Selected: ${ex ? escapeHtml(ex.name) : 'none'} · ${state.workout.location} · ${workoutStats().totalSets}/${workoutStats().plannedSets} sets logged</div></div>
+      ${rest ? `<button class="btn primary small" data-action="startNextExercise">Start next exercise</button>` : ''}
+      <button class="btn small" data-action="nav" data-screen="workout">Open logger</button>
+      <button class="btn danger small" data-action="endWorkout">End</button>
+    </div>`;
+  }
+
+  function renderSidebarCard() {
+    const s = workoutStats();
+    const openWarnings = state.importReview.aliases.filter(a=>a.review).length + state.importReview.warnings.filter(w=>w.status==='review').length;
+    return `<div class="sidebar-card stack">
+      <div class="between"><strong>Cycle ${state.workout.cycle}</strong><span class="pill accent">Day ${state.workout.day}</span></div>
+      <div class="small muted">${s.totalSets}/${s.plannedSets} sets · ${fmt(s.volume)} lb volume · ${s.bw} BW reps</div>
+      <div class="small muted">${state.pendingChanges} pending change${state.pendingChanges === 1 ? '' : 's'}</div>
+      ${openWarnings ? `<button class="btn warn small" data-action="nav" data-screen="import">${openWarnings} import reviews</button>` : `<span class="pill good">Import review clear</span>`}
+    </div>`;
+  }
+
+  function pageHead(title, subtitle, actions='') {
+    return `<div class="page-head"><div><div class="eyebrow">${title.split(' ')[0]}</div><h2>${title}</h2><p>${subtitle}</p></div><div class="head-actions">${actions}</div></div>`;
+  }
+  function renderScreen() {
+    return ({dashboard:renderDashboard, workout:renderWorkout, program:renderProgram, progression:renderProgression, import:renderImport, analytics:renderAnalytics, devices:renderDevices, settings:renderSettings}[state.screen] || renderDashboard)();
+  }
+
+  function metric(label, value, sub) {
+    return `<div class="metric"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
+  }
+
+  function renderDashboard() {
+    const s = workoutStats();
+    const conflict = state.devices.sessions.filter(x=>x.status==='active').length > 1;
+    const openWarnings = state.importReview.aliases.filter(a=>a.review).length + state.importReview.warnings.filter(w=>w.status==='review').length;
+    return `${pageHead('Dashboard', 'Current cycle status, active timing, sync state, and review prompts.', `
+      <button class="btn primary" data-action="nav" data-screen="workout">Open workout</button>
+      <button class="btn" data-action="nav" data-screen="analytics">View analytics</button>
+    `)}
+    <div class="grid cols-4">
+      ${metric('Session time', `<span id="dashSessionTimer">${fmtSeconds(activeWorkoutSeconds())}</span>`, state.workout.startedAt ? 'Persistent ribbon active' : 'Start workout to show ribbon')}
+      ${metric('Resistance volume', `${fmt(s.volume)} lb`, 'bodyweight excluded; unilateral doubled')}
+      ${metric('Completed sets', `${s.totalSets}/${s.plannedSets}`, `${s.completeExercises}/${state.workout.exercises.length} exercises complete`)}
+      ${metric('Bodyweight reps', fmt(s.bw), 'tracked separately')}
+    </div>
+    <div class="grid cols-2" style="margin-top:12px">
+      <div class="card stack">
+        <div class="between"><div><h3>Today’s workout</h3><p>Cycle ${state.workout.cycle}, Day ${state.workout.day} · ${state.workout.date}</p></div><span class="pill ${state.online?'good':'warn'}">${state.online?'sync ready':'offline queue'}</span></div>
+        <div class="bar-row"><span class="small muted">Sets</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s.totalSets/Math.max(1,s.plannedSets)*100)}%"></div></div><strong>${s.totalSets}/${s.plannedSets}</strong></div>
+        <p>${escapeHtml(state.workout.notes)}</p>
+        <div class="row"><button class="btn primary" data-action="startWorkout">${state.workout.startedAt ? 'Workout started' : 'Start workout'}</button><button class="btn" data-action="nav" data-screen="workout">Log sets</button></div>
+      </div>
+      <div class="card stack">
+        <div class="between"><h3>Pre-implementation review queue</h3><span class="pill ${openWarnings?'warn':'good'}">${openWarnings} open</span></div>
+        ${conflict ? `<div class="compact card"><strong>Multiple active devices</strong><p>Phone and browser are both open. Device controls can terminate a session or resolve conflicts.</p><button class="btn warn small" data-action="nav" data-screen="devices">Review devices</button></div>` : ''}
+        ${state.progression.skipCycle ? `<div class="compact card"><strong>Progression skipped for this cycle</strong><p>Recommendations are logged for analytics but will not auto-become defaults.</p></div>` : ''}
+        <div class="compact card"><strong>Exercise tracker</strong><p>Analytics now includes per-exercise lookback and progression logs.</p><button class="btn small" data-action="nav" data-screen="analytics">Open tracker</button></div>
+      </div>
+    </div>`;
+  }
+
+  function renderWorkout() {
+    const s = workoutStats();
+    const selected = selectedWorkoutExercise();
+    return `${pageHead('Workout Logger', 'Select, drag, collapse, log, complete, and rest between exercises.', `
+      <button class="btn primary" data-action="startWorkout">${state.workout.startedAt ? 'Timer running' : 'Start session'}</button>
+      <button class="btn" data-action="toggleWorkoutCollapse" data-key="collapseCompletedSets">${state.workout.collapseCompletedSets ? 'Show completed sets' : 'Hide completed sets'}</button>
+      <button class="btn" data-action="toggleWorkoutCollapse" data-key="collapseCompletedExercises">${state.workout.collapseCompletedExercises ? 'Show completed exercises' : 'Hide completed exercises'}</button>
+    `)}
+    <div class="grid cols-3">
+      ${metric('Session', `<span id="workoutSessionTimer">${fmtSeconds(activeWorkoutSeconds())}</span>`, 'first set to last set by default')}
+      ${metric('Resistance volume', `${fmt(s.volume)} lb`, 'clean app logic')}
+      ${metric('Rest', state.workout.activeRest ? `<span id="workoutRestTimer">${fmtSeconds(activeRestRemaining())}</span>` : 'none', 'after completed exercise/set')}
+    </div>
+    <div class="card stack" style="margin-top:12px">
+      <div class="between"><h3>Workout-specific notes</h3><span class="pill accent">parsed tags</span></div>
+      <textarea class="textarea" data-action="workoutNotes" placeholder="Session-level notes: location, equipment limits, pain, timing, substitutions...">${escapeHtml(state.workout.notes)}</textarea>
+      <div class="row">${parseTags(state.workout.notes).map(([t,v]) => `<span class="pill accent">${t}: ${v}</span>`).join('') || '<span class="pill">No parsed tags yet</span>'}</div>
+    </div>
+    <div class="grid cols-2" style="margin-top:12px; align-items:start">
+      <div class="stack" id="workoutExerciseList">
+        ${state.workout.exercises.map((we, idx) => renderWorkoutExerciseCard(we, idx)).join('')}
+      </div>
+      <div class="card stack">
+        <div class="between"><h3>Selected exercise</h3>${selected ? `<span class="pill accent">${exercise(selected.exerciseId).group}</span>` : ''}</div>
+        ${selected ? renderSelectedExercisePanel(selected) : '<p>No exercise selected.</p>'}
+      </div>
+    </div>`;
+  }
+
+  function renderWorkoutExerciseCard(we, idx) {
+    const ex = exercise(we.exerciseId), complete = isExerciseComplete(we), selected = we.id === state.workout.selectedExerciseId;
+    if (state.workout.collapseCompletedExercises && complete) {
+      return `<div class="card compact exercise-card group-border ${slugGroup(ex.group)}" draggable="true" data-drag-type="workoutExercise" data-drag-id="${we.id}" data-action="selectWorkoutExercise" data-id="${we.id}">
+        <div class="between"><div class="row"><span class="drag-handle">☰</span><strong>${idx+1}. ${escapeHtml(ex.name)}</strong><span class="pill good">completed</span></div><button class="btn small" data-action="toggleExerciseCollapse" data-id="${we.id}">Expand</button></div>
+      </div>`;
+    }
+    return `<div class="card exercise-card group-border ${slugGroup(ex.group)} ${selected?'selected':''}" draggable="true" data-drag-type="workoutExercise" data-drag-id="${we.id}" data-action="selectWorkoutExercise" data-id="${we.id}">
+      <div class="between">
+        <div class="row"><span class="drag-handle" title="Drag to reorder">☰</span><span class="group-band"><span class="group-swatch"></span><strong>${idx+1}. ${escapeHtml(ex.name)}</strong></span>${ex.unilateral?'<span class="pill">2× volume</span>':''}${ex.bodyweight?'<span class="pill warn">BW separate</span>':''}</div>
+        <div class="exercise-actions">
+          <button class="btn small" data-action="toggleExerciseCollapse" data-id="${we.id}">${we.collapsed?'Expand':'Collapse'}</button>
+          <button class="btn good small" data-action="completeExercise" data-id="${we.id}">Complete + rest</button>
+        </div>
+      </div>
+      <p class="small">${escapeHtml(we.last)} · ${completedSets(we)}/${we.sets.length} sets · ${fmt(resistanceVolume(we))} lb volume · ${bodyweightReps(we)} BW reps</p>
+      ${we.collapsed ? '' : `<div class="set-list" style="margin-top:10px">${we.sets.map((set, i) => renderSetRow(we, set, i)).join('')}</div>`}
+    </div>`;
+  }
+
+  function renderSetRow(we, set, i) {
+    if (state.workout.collapseCompletedSets && set.complete) {
+      return `<div class="set-row complete"><span class="mono">${i+1}</span><div><strong>Set ${i+1}</strong> completed · ${set.reps}${exercise(we.exerciseId).bodyweight ? ' reps' : ` × ${set.load} lb`}</div><button class="btn small" data-action="toggleSetCollapse" data-we="${we.id}" data-set="${set.id}">Show</button></div>`;
+    }
+    return `<div class="set-row ${set.complete?'complete':''}">
+      <span class="mono"><input class="check" type="checkbox" ${set.complete?'checked':''} data-action="completeSet" data-we="${we.id}" data-set="${set.id}" /></span>
+      <div class="set-main">
+        <label class="field">Set<input class="input" value="${i+1}" disabled /></label>
+        <label class="field">Reps<input class="input" type="number" value="${set.reps}" data-action="setInput" data-field="reps" data-we="${we.id}" data-set="${set.id}" /></label>
+        <label class="field">Load<input class="input" type="number" step="0.5" value="${set.load}" data-action="setInput" data-field="load" data-we="${we.id}" data-set="${set.id}" /></label>
+        <label class="field">Type<select class="select" data-action="setInput" data-field="type" data-we="${we.id}" data-set="${set.id}">${['standard','failure','partials','drop set','myoreps'].map(t=>`<option ${set.type===t?'selected':''}>${t}</option>`).join('')}</select></label>
+        <label class="field">Rest after<input class="input" type="number" value="${set.restAfter || ''}" placeholder="sec" data-action="setInput" data-field="restAfter" data-we="${we.id}" data-set="${set.id}" /></label>
+      </div>
+      <div class="set-actions">
+        <button class="btn small" data-action="toggleSetCollapse" data-we="${we.id}" data-set="${set.id}">${set.collapsed?'Details':'Collapse set'}</button>
+        <button class="btn small" data-action="copyPreviousSet" data-we="${we.id}" data-index="${i}">Copy prev</button>
+      </div>
+      ${set.collapsed ? '' : `<div class="set-advanced">
+        <label class="field">RIR<input class="input" value="${escapeHtml(set.rir)}" data-action="setInput" data-field="rir" data-we="${we.id}" data-set="${set.id}" /></label>
+        <label class="field">RPE<input class="input" value="${escapeHtml(set.rpe)}" data-action="setInput" data-field="rpe" data-we="${we.id}" data-set="${set.id}" /></label>
+        <label class="field">Set note<input class="input" value="${escapeHtml(set.note)}" data-action="setInput" data-field="note" data-we="${we.id}" data-set="${set.id}" /></label>
+        <div class="field"><label>Quick tags</label><div class="row"><button class="btn small" data-action="setType" data-type="failure" data-we="${we.id}" data-set="${set.id}">Failure</button><button class="btn small" data-action="setType" data-type="partials" data-we="${we.id}" data-set="${set.id}">Partials</button><button class="btn small" data-action="setType" data-type="drop set" data-we="${we.id}" data-set="${set.id}">Drop</button><button class="btn small" data-action="setType" data-type="myoreps" data-we="${we.id}" data-set="${set.id}">Myo</button></div></div>
+      </div>`}
+    </div>`;
+  }
+
+  function renderSelectedExercisePanel(we) {
+    const ex = exercise(we.exerciseId), rec = state.progression.recommendations[we.id] || baseRecommendation(we);
+    return `<div class="stack ${slugGroup(ex.group)}">
+      <div class="compact card group-border ${slugGroup(ex.group)}">
+        <div class="between"><strong>${escapeHtml(ex.name)}</strong><span class="pill">${ex.equipment}</span></div>
+        <p>${ex.group} · ${ex.bodyweight ? 'bodyweight/calisthenics excluded from resistance volume' : `${ex.increment} lb increment`}${ex.unilateral ? ' · unilateral volume doubled' : ''}</p>
+      </div>
+      <div class="grid cols-2">
+        ${metric('Completed sets', `${completedSets(we)}/${we.sets.length}`, 'tap checkboxes to log')}
+        ${metric('Volume', `${fmt(resistanceVolume(we))} lb`, ex.bodyweight ? 'excluded from resistance total' : 'clean calculation')}
+      </div>
+      <div class="compact card"><strong>Recommendation</strong><p>${rec.sets} sets · ${escapeHtml(rec.reps)} reps · ${escapeHtml(rec.load)} ${ex.bodyweight ? '' : 'lb'}</p><p class="small">${escapeHtml(rec.reason)}</p><button class="btn small" data-action="nav" data-screen="progression">Edit recommendation</button></div>
+      <label class="field">Exercise notes<textarea class="textarea" data-action="exerciseNote" data-we="${we.id}">${escapeHtml(we.note)}</textarea></label>
+      <div class="row">${parseTags(we.note).map(([t,v]) => `<span class="pill accent">${t}: ${v}</span>`).join('') || '<span class="pill">No parsed tags</span>'}</div>
+      <div class="row"><button class="btn" data-action="addSet" data-we="${we.id}">Add set</button><button class="btn good" data-action="completeExercise" data-id="${we.id}">Complete exercise + rest</button></div>
+    </div>`;
+  }
+
+  function renderProgram() {
+    const day = selectedProgramDay();
+    return `${pageHead('Program Builder', 'Drag days, edit structured day content, select exercises, and reorder recommended exercise order.', `
+      <button class="btn primary" data-action="addProgramDay">Add day</button>
+      <button class="btn" data-action="generateProgramSuggestion">Generate suggestion</button>
+    `)}
+    <div class="program-board">
+      <div class="card stack">
+        <div class="between"><h3>Cycle day order</h3><span class="pill">drag days</span></div>
+        <div class="day-list">${state.program.days.map((d,i)=>renderProgramDayCard(d,i)).join('')}</div>
+      </div>
+      <div class="card stack">
+        <div class="between"><h3>Day preview / editor</h3><span class="pill accent">${day ? `Day ${day.day}` : 'None'}</span></div>
+        ${day ? renderProgramDayEditor(day) : '<p>Select a day.</p>'}
+      </div>
+    </div>`;
+  }
+  function renderProgramDayCard(d, i) {
+    return `<div class="program-day ${d.id===state.program.selectedDayId?'selected':''}" draggable="true" data-drag-type="programDay" data-drag-id="${d.id}" data-action="selectProgramDay" data-id="${d.id}">
+      <div><div class="row"><span class="drag-handle">☰</span><strong>${i+1}. ${escapeHtml(d.title)}</strong></div><div class="small muted">${d.status} · ${d.exercises.length} exercises</div></div>
+      <span class="pill ${d.status==='rest'?'warn':'good'}">${d.status}</span>
+    </div>`;
+  }
+  function renderProgramDayEditor(day) {
+    return `<div class="stack">
+      <div class="grid cols-3">
+        <label class="field">Day number<input class="input" type="number" value="${day.day}" data-action="programDayInput" data-day="${day.id}" data-field="day" /></label>
+        <label class="field">Title<input class="input" value="${escapeHtml(day.title)}" data-action="programDayInput" data-day="${day.id}" data-field="title" /></label>
+        <label class="field">Status<select class="select" data-action="programDayInput" data-day="${day.id}" data-field="status">${['training','rest','sick','deload','optional'].map(s=>`<option ${day.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
+      </div>
+      <label class="field">Day notes<textarea class="textarea" data-action="programDayInput" data-day="${day.id}" data-field="notes">${escapeHtml(day.notes)}</textarea></label>
+      <div class="between"><h3>Exercise order after recommendation</h3><span class="pill">select + drag</span></div>
+      <div class="stack">${day.exercises.map((eid,i)=>renderProgramExerciseRow(day, eid, i)).join('') || '<p class="muted">Rest day or no exercises.</p>'}</div>
+      <div class="grid cols-2">
+        <label class="field">Add exercise<select class="select" id="programAddExercise">${state.exerciseDb.map(e=>`<option value="${e.id}">${escapeHtml(e.name)} — ${e.group}</option>`).join('')}</select></label>
+        <div class="row" style="align-items:end"><button class="btn primary" data-action="addProgramExercise" data-day="${day.id}">Add</button><button class="btn" data-action="makeRestDay" data-day="${day.id}">Make rest day</button></div>
+      </div>
+    </div>`;
+  }
+  function renderProgramExerciseRow(day, eid, i) {
+    const ex = exercise(eid), selected = state.program.selectedExerciseId === `${day.id}:${i}`;
+    return `<div class="program-ex-row ${slugGroup(ex.group)} group-border ${selected?'selected-row':''}" draggable="true" data-drag-type="programExercise" data-day="${day.id}" data-index="${i}" data-action="selectProgramExercise" data-day-id="${day.id}" data-index-id="${i}">
+      <span class="drag-handle">☰</span>
+      <div><strong>${i+1}. ${escapeHtml(ex.name)}</strong><div class="small muted">${ex.group} · ${ex.equipment} · ${ex.low}-${ex.high} reps${ex.unilateral?' · 2× volume':''}</div></div>
+      <div class="row"><button class="btn small" data-action="moveProgramExercise" data-day="${day.id}" data-index="${i}" data-dir="up">↑</button><button class="btn small" data-action="moveProgramExercise" data-day="${day.id}" data-index="${i}" data-dir="down">↓</button><button class="btn danger small" data-action="removeProgramExercise" data-day="${day.id}" data-index="${i}">Remove</button></div>
+    </div>`;
+  }
+
+  function renderProgression() {
+    const rows = state.workout.exercises.map(we => renderRecommendationRow(we)).join('');
+    return `${pageHead('Progression Engine', 'Edit overload recommendations before they become future defaults; optionally skip progression for the whole cycle while logging decisions.', `
+      <button class="btn ${state.progression.skipCycle?'warn':'good'}" data-action="toggleSkipProgression">${state.progression.skipCycle ? 'Progression skipped this cycle' : 'Progression active'}</button>
+      <button class="btn" data-action="recalculateRecommendations">Recalculate</button>
+    `)}
+    <div class="grid cols-2">
+      <div class="card stack">
+        <h3>Global cycle option</h3>
+        <label class="section-toggle"><input type="checkbox" class="check" ${state.progression.skipCycle?'checked':''} data-action="toggleSkipProgression" /> Skip progression for this cycle</label>
+        <p>When enabled, recommendations are still calculated and added to the progression log, but they will not automatically become future defaults.</p>
+        <div class="row"><button class="btn primary" data-action="logProgressionSnapshot">Log current recommendations</button><button class="btn" data-action="nav" data-screen="analytics">View in analytics</button></div>
+      </div>
+      <div class="card stack">
+        <h3>Rule editor notes</h3>
+        <p>Default is rep-first plus double progression. Exercise and program-block rules can override global defaults. Recommendations remain advisory only.</p>
+        <div class="row"><span class="pill">DB +2.5 lb</span><span class="pill">Barbell +5 lb</span><span class="pill">Cables +2.5 lb</span><span class="pill">BW reps only</span></div>
+      </div>
+    </div>
+    <div class="card stack" style="margin-top:12px">
+      <div class="between"><h3>Editable recommendations</h3><span class="pill accent">edit before defaulting</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Exercise</th><th>Sets</th><th>Rep target</th><th>Load</th><th>Reason / user edit</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>
+    <div class="card stack" style="margin-top:12px">
+      <div class="between"><h3>Detailed progression log</h3><span class="pill">used by analytics</span></div>
+      ${renderProgressionLogTable()}
+    </div>`;
+  }
+  function renderRecommendationRow(we) {
+    const ex = exercise(we.exerciseId), rec = state.progression.recommendations[we.id] || baseRecommendation(we);
+    return `<tr><td><strong>${escapeHtml(ex.name)}</strong><br><span class="small muted">${ex.group} · ${ex.equipment}</span></td>
+      <td><input class="input short" type="number" value="${rec.sets}" data-action="recInput" data-we="${we.id}" data-field="sets" /></td>
+      <td><input class="input" value="${escapeHtml(rec.reps)}" data-action="recInput" data-we="${we.id}" data-field="reps" /></td>
+      <td><input class="input short" value="${escapeHtml(rec.load)}" data-action="recInput" data-we="${we.id}" data-field="load" /></td>
+      <td><textarea class="textarea" style="min-height:62px" data-action="recInput" data-we="${we.id}" data-field="reason">${escapeHtml(rec.reason)}</textarea>${rec.edited?'<span class="pill warn">edited</span>':''}${rec.accepted?'<span class="pill good">future default</span>':''}</td>
+      <td><div class="row"><button class="btn good small" data-action="acceptRecommendation" data-we="${we.id}">Accept as default</button><button class="btn small" data-action="logOneRecommendation" data-we="${we.id}">Log only</button></div></td></tr>`;
+  }
+  function renderProgressionLogTable() {
+    const rows = state.progression.log.slice().reverse().map(l => `<tr><td>${escapeHtml(l.at)}</td><td>Cycle ${l.cycle}</td><td>${escapeHtml(l.exercise)}</td><td>${escapeHtml(l.action)}</td><td>${escapeHtml(l.detail)}</td><td>${l.usedInAnalytics?'<span class="pill good">yes</span>':'<span class="pill">no</span>'}</td></tr>`).join('');
+    return `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Cycle</th><th>Exercise</th><th>Action</th><th>Detail</th><th>Analytics</th></tr></thead><tbody>${rows || '<tr><td colspan="6">No logs yet.</td></tr>'}</tbody></table></div>`;
+  }
+
+  function renderImport() {
+    const open = state.importReview.aliases.filter(a=>a.review).length + state.importReview.warnings.filter(w=>w.status==='review').length;
+    return `${pageHead('Import Review', 'Approve aliases, warnings, formula mismatches, and note tags before committing imported Log data.', `
+      <span class="pill ${open?'warn':'good'}">${open} open item${open===1?'':'s'}</span>
+      <button class="btn primary" ${open?'disabled':''} data-action="commitImport">Commit import</button>
+    `)}
+    <div class="grid cols-4">
+      ${metric('Rows seen','2,142','Log A:Q')}
+      ${metric('Exercise rows','948','usable logs')}
+      ${metric('Templates ignored','50','prior templates')}
+      ${metric('Warnings','26','source-volume mismatches')}
+    </div>
+    <div class="grid cols-2" style="margin-top:12px">
+      <div class="card stack"><h3>Alias merge review</h3><div class="table-wrap"><table><thead><tr><th>Raw</th><th>Canonical</th><th>Confidence</th><th>Review</th></tr></thead><tbody>${state.importReview.aliases.map(a=>`<tr><td>${escapeHtml(a.raw)}</td><td><input class="input" value="${escapeHtml(a.canonical)}" data-action="aliasInput" data-id="${a.id}" /></td><td>${a.confidence}%</td><td><label class="section-toggle"><input class="check" type="checkbox" ${a.review?'checked':''} data-action="aliasReview" data-id="${a.id}" /> needs review</label></td></tr>`).join('')}</tbody></table></div></div>
+      <div class="card stack"><h3>Warnings</h3>${state.importReview.warnings.map(w=>`<div class="card compact"><div class="between"><div><strong>Row ${w.row}: ${w.type}</strong><p class="small">${escapeHtml(w.text)}</p></div><button class="btn ${w.status==='review'?'warn':'good'} small" data-action="resolveWarning" data-id="${w.id}">${w.status==='review'?'Resolve':'Resolved'}</button></div></div>`).join('')}</div>
+    </div>`;
+  }
+
+  function renderAnalytics() {
+    const data = cycleData(Number(state.analytics.lookback));
+    const metricKey = state.analytics.metric;
+    const tracked = exercise(state.analytics.trackedExerciseId);
+    return `${pageHead('Analytics', 'Cycle lookback, cycle comparison, progression logs, and per-exercise tracker.', `
+      <button class="btn" data-action="exportMockExcel">Export Excel mock</button>
+    `)}
+    <div class="grid cols-4">
+      ${metric('Lookback', `${state.analytics.lookback === 'all' ? 'All' : state.analytics.lookback} cycles`, 'user-selectable')}
+      ${metric('Latest volume', `${fmt(data.at(-1)?.volume || 0)} lb`, 'resistance only')}
+      ${metric('Progression logs', state.progression.log.length, 'used by recommendations')}
+      ${metric('Tracked exercise', escapeHtml(tracked.name), `${tracked.group} · ${tracked.equipment}`)}
+    </div>
+    <div class="card stack" style="margin-top:12px">
+      <div class="between"><h3>Cycle lookback</h3><div class="row"><label class="field">Lookback<select class="select" data-action="analyticsInput" data-field="lookback">${[3,6,12,24,36,'all'].map(v=>`<option value="${v}" ${String(state.analytics.lookback)===String(v)?'selected':''}>${v === 'all' ? 'All cycles' : `${v} cycles`}</option>`).join('')}</select></label><label class="field">Metric<select class="select" data-action="analyticsInput" data-field="metric">${['volume','sets','prs'].map(m=>`<option ${metricKey===m?'selected':''}>${m}</option>`).join('')}</select></label></div></div>
+      ${renderBars(data, metricKey)}
+    </div>
+    <div class="grid cols-2" style="margin-top:12px">
+      <div class="card stack"><h3>Exercise tracker</h3><label class="field">Exercise<select class="select" data-action="analyticsInput" data-field="trackedExerciseId">${state.exerciseDb.map(e=>`<option value="${e.id}" ${state.analytics.trackedExerciseId===e.id?'selected':''}>${escapeHtml(e.name)} — ${e.group}</option>`).join('')}</select></label>${renderExerciseTracker(tracked)}</div>
+      <div class="card stack"><h3>Progression log in analytics</h3>${renderProgressionLogTable()}</div>
+    </div>`;
+  }
+  function cycleData(lookback) {
+    const max = 37;
+    const count = lookback === 'all' || Number.isNaN(lookback) ? 36 : Number(lookback);
+    const start = Math.max(1, max - count + 1);
+    const arr = [];
+    for (let c=start; c<=max; c++) {
+      arr.push({cycle:c, volume: 18500 + c*430 + ((c%4)-2)*850, sets: 74 + (c%6)*4, prs: Math.max(0, (c%5)-1)});
+    }
+    return arr;
+  }
+  function renderBars(data, metric) {
+    const max = Math.max(1, ...data.map(d => d[metric] || 0));
+    return `<div>${data.map(d=>`<div class="bar-row"><span class="small">Cycle ${d.cycle}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round((d[metric]||0)/max*100)}%"></div></div><strong>${fmt(d[metric]||0)}</strong></div>`).join('')}</div>`;
+  }
+  function renderExerciseTracker(ex) {
+    const history = [
+      {cycle:35, sets:3, reps:'10/10/9', load: ex.bodyweight ? 'BW' : ex.equipment==='barbell'?'95':'17.5', volume: ex.bodyweight ? '29 reps' : '1,520 lb'},
+      {cycle:36, sets:4, reps:'14/13/14/14', load: ex.bodyweight ? 'BW' : ex.equipment==='barbell'?'100':'17.5', volume: ex.bodyweight ? '55 reps' : '1,785 lb'},
+      {cycle:37, sets:4, reps:'target: raise lowest', load: ex.bodyweight ? 'reps only' : ex.equipment==='barbell'?'105':'17.5', volume: 'projected'}
+    ];
+    return `<div class="compact card ${slugGroup(ex.group)} group-border"><strong>${escapeHtml(ex.name)}</strong><p>${ex.bodyweight?'Bodyweight/calisthenics tracker: reps, density, rest, PRs.':'Resistance tracker: load, reps, volume, PRs.'}</p></div><div class="table-wrap"><table><thead><tr><th>Cycle</th><th>Sets</th><th>Reps</th><th>Load</th><th>Volume / result</th></tr></thead><tbody>${history.map(h=>`<tr><td>${h.cycle}</td><td>${h.sets}</td><td>${h.reps}</td><td>${h.load}</td><td>${h.volume}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function renderDevices() {
+    return `${pageHead('Devices', 'Warn when phone and browser are both active, terminate sessions, and resolve conflicts by choosing a version.', `
+      <button class="btn warn" data-action="simulateConflict">Simulate conflict</button>
+    `)}
+    <div class="grid cols-2">
+      <div class="card stack"><h3>Active sessions</h3>${state.devices.sessions.map(s=>`<div class="card compact"><div class="between"><div><strong>${escapeHtml(s.label)}</strong><p>${s.type} · ${s.status} · last seen ${s.lastSeen}</p></div>${s.status==='active'?`<button class="btn danger small" data-action="terminateSession" data-id="${s.id}">Terminate</button>`:'<span class="pill">inactive</span>'}</div></div>`).join('')}</div>
+      <div class="card stack"><h3>Conflict resolver</h3><p>If both devices edit the same workout, the app asks which version to keep.</p><button class="btn primary" data-action="simulateConflict">Open resolver</button><div class="compact card"><strong>Status</strong><p>${state.devices.conflict.resolved ? `Resolved with ${state.devices.conflict.resolution}` : 'No resolved choice yet.'}</p></div></div>
+    </div>`;
+  }
+  function renderConflictModal() {
+    const c = state.devices.conflict;
+    return `<div class="modal-backdrop"><div class="modal stack"><div class="between"><h3>Resolve device conflict</h3><button class="btn small" data-action="closeConflict">Close</button></div><p>${escapeHtml(c.entity)} was edited on phone and browser before sync. Select the version to keep.</p><div class="grid cols-2"><div class="card"><h3>Mobile / Android PWA</h3><p>${escapeHtml(c.mobile)}</p><button class="btn primary" data-action="resolveConflict" data-version="mobile">Use mobile</button></div><div class="card"><h3>Browser</h3><p>${escapeHtml(c.browser)}</p><button class="btn primary" data-action="resolveConflict" data-version="browser">Use browser</button></div></div></div></div>`;
+  }
+
+  function renderSettings() {
+    return `${pageHead('Settings', 'Advanced configuration for themes, UI density, buttons, timers, exports, and exercise database.', `
+      <button class="btn primary" data-action="saveSettings">Save preview settings</button>
+    `)}
+    <div class="grid cols-2">
+      <div class="card stack">
+        <h3>Theme / UI / buttons</h3>
+        <div class="grid cols-2">
+          <label class="field">Theme<select class="select" data-action="settingInput" data-field="themeMode">${['dark','light','system'].map(v=>`<option ${state.settings.themeMode===v?'selected':''}>${v}</option>`).join('')}</select></label>
+          <label class="field">Accent color<input class="input" type="color" value="${state.accent}" data-action="accentInput" /></label>
+          <label class="field">Density<select class="select" data-action="densityInput">${['compact','normal','comfortable'].map(v=>`<option ${state.density===v?'selected':''}>${v}</option>`).join('')}</select></label>
+          <label class="field">Button size<select class="select" data-action="buttonSizeInput">${['small','normal','large'].map(v=>`<option ${state.buttonSize===v?'selected':''}>${v}</option>`).join('')}</select></label>
+          <label class="field">Font scale<select class="select" data-action="fontScaleInput">${['small','normal','large'].map(v=>`<option ${state.fontScale===v?'selected':''}>${v}</option>`).join('')}</select></label>
+          <label class="field">Button layout<select class="select" data-action="settingInput" data-field="buttonLayout">${['compact','balanced','large logging controls'].map(v=>`<option ${state.settings.buttonLayout===v?'selected':''}>${v}</option>`).join('')}</select></label>
+        </div>
+        <label class="section-toggle"><input class="check" type="checkbox" ${state.settings.persistentTimerRibbon?'checked':''} data-action="settingCheckbox" data-field="persistentTimerRibbon" /> Persistent time ribbon once workout starts</label>
+        <label class="section-toggle"><input class="check" type="checkbox" ${state.settings.showLargeCompleteButton?'checked':''} data-action="settingCheckbox" data-field="showLargeCompleteButton" /> Large complete buttons</label>
+        <label class="section-toggle"><input class="check" type="checkbox" ${state.settings.exerciseGroupBadges?'checked':''} data-action="settingCheckbox" data-field="exerciseGroupBadges" /> Muscle-group color badges</label>
+      </div>
+      <div class="card stack">
+        <h3>Timing / export</h3>
+        <label class="field">Session timing<select class="select" data-action="settingInput" data-field="sessionTiming">${['first_to_last','manual_start_stop','manual_override','all_options'].map(v=>`<option ${state.settings.sessionTiming===v?'selected':''}>${v}</option>`).join('')}</select></label>
+        <label class="field">Default rest seconds<input class="input" type="number" value="${state.settings.defaultRestSeconds}" data-action="settingInput" data-field="defaultRestSeconds" /></label>
+        <label class="section-toggle"><input class="check" type="checkbox" ${state.settings.autoRest?'checked':''} data-action="settingCheckbox" data-field="autoRest" /> Auto-start rest after complete set/exercise</label>
+        <label class="field">Export / backup target<input class="input" value="${escapeHtml(state.settings.exportTarget)}" data-action="settingInput" data-field="exportTarget" /></label>
+      </div>
+    </div>
+    <div class="card stack" style="margin-top:12px">
+      <div class="between"><h3>Exercise database by group</h3><span class="pill accent">user-editable</span></div>
+      ${renderExerciseDatabase()}
+    </div>`;
+  }
+  function renderExerciseDatabase() {
+    const groupFilter = state.settings.exerciseDbGroup || 'All';
+    const list = state.exerciseDb.filter(e => groupFilter === 'All' || e.group === groupFilter);
+    return `<div class="grid cols-3">
+      <label class="field">Group filter<select class="select" data-action="settingInput" data-field="exerciseDbGroup"><option>All</option>${groups.map(g=>`<option ${groupFilter===g?'selected':''}>${g}</option>`).join('')}</select></label>
+      <label class="field">New exercise name<input class="input" id="newExerciseName" placeholder="e.g. Chest Supported Row" /></label>
+      <label class="field">New exercise group<select class="select" id="newExerciseGroup">${groups.map(g=>`<option>${g}</option>`).join('')}</select></label>
+      <label class="field">Equipment<select class="select" id="newExerciseEquipment">${['dumbbell','barbell','cable','machine','bodyweight','other'].map(e=>`<option>${e}</option>`).join('')}</select></label>
+      <label class="section-toggle" style="align-self:end"><input class="check" id="newExerciseUnilateral" type="checkbox" /> unilateral / double volume</label>
+      <label class="section-toggle" style="align-self:end"><input class="check" id="newExerciseBodyweight" type="checkbox" /> bodyweight / calisthenics</label>
+    </div>
+    <div class="row"><button class="btn primary" data-action="addExerciseDb">Add exercise</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Group</th><th>Equipment</th><th>Increment</th><th>Flags</th><th></th></tr></thead><tbody>${list.map(e=>`<tr><td><input class="input" value="${escapeHtml(e.name)}" data-action="exerciseDbInput" data-id="${e.id}" data-field="name" /></td><td><select class="select" data-action="exerciseDbInput" data-id="${e.id}" data-field="group">${groups.map(g=>`<option ${e.group===g?'selected':''}>${g}</option>`).join('')}</select></td><td><select class="select" data-action="exerciseDbInput" data-id="${e.id}" data-field="equipment">${['dumbbell','barbell','cable','machine','bodyweight','other'].map(eq=>`<option ${e.equipment===eq?'selected':''}>${eq}</option>`).join('')}</select></td><td><input class="input short" type="number" step="0.5" value="${e.increment}" data-action="exerciseDbInput" data-id="${e.id}" data-field="increment" /></td><td>${e.unilateral?'<span class="pill">2×</span>':''}${e.bodyweight?'<span class="pill warn">BW</span>':''}</td><td><button class="btn danger small" data-action="deleteExerciseDb" data-id="${e.id}">Delete</button></td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function renderFeedbackDrawer() {
+    return `<div class="feedback-drawer stack"><div class="between"><h3>Screen feedback</h3><button class="btn small" data-action="toggleFeedback">Close</button></div><p class="small">Feedback is stored by current screen and exported as JSON for Codex.</p><textarea class="textarea" data-action="feedbackDraft" placeholder="What should change on ${state.screen}?">${escapeHtml(state.feedbackDraft)}</textarea><div class="row"><button class="btn primary" data-action="saveFeedback">Save feedback</button><button class="btn" data-action="exportFeedback">Export JSON</button></div><div class="stack">${state.feedback.slice().reverse().map(f=>`<div class="compact card"><strong>${escapeHtml(f.screen)}</strong><p>${escapeHtml(f.text)}</p><div class="small muted">${escapeHtml(f.at)}</div></div>`).join('') || '<p class="muted">No feedback saved yet.</p>'}</div></div>`;
+  }
+  function renderToast() {
+    const host = document.getElementById('toastHost');
+    if (!host) return;
+    host.innerHTML = state.toast ? `<div class="toast">${escapeHtml(state.toast)}</div>` : '';
+  }
+
+  function updateTimers() {
+    const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    const session = fmtSeconds(activeWorkoutSeconds());
+    setText('globalSessionTimer', session); setText('dashSessionTimer', session); setText('workoutSessionTimer', session);
+    if (state.workout.activeRest) {
+      const remaining = activeRestRemaining();
+      setText('workoutRestTimer', remaining > 0 ? fmtSeconds(remaining) : 'Rest complete');
+      const ribbon = document.getElementById('timerRibbon');
+      if (ribbon) {
+        const pills = ribbon.querySelectorAll('.timer-pill');
+        if (pills[1]) pills[1].textContent = remaining > 0 ? `Rest ${fmtSeconds(remaining)}` : 'Rest complete';
+      }
+    }
+  }
+  setInterval(updateTimers, 1000);
+
+  function findWorkoutExercise(id) { return state.workout.exercises.find(we => we.id === id); }
+  function findSet(we, sid) { return we.sets.find(s => s.id === sid); }
+  function startWorkoutIfNeeded() { if (!state.workout.startedAt) state.workout.startedAt = nowIso(); }
+  function startRestAfterExercise(we) {
+    const idx = state.workout.exercises.findIndex(x=>x.id===we.id);
+    const next = state.workout.exercises[idx+1];
+    state.workout.activeRest = {startedAt: nowIso(), durationSeconds: Number(state.settings.defaultRestSeconds)||90, afterExerciseId: we.id, nextExerciseId: next ? next.id : null};
+    if (next) state.workout.selectedExerciseId = next.id;
+  }
+  function reorderById(arr, fromId, toId) {
+    const from = arr.findIndex(x => x.id === fromId), to = arr.findIndex(x => x.id === toId);
+    if (from < 0 || to < 0 || from === to) return;
+    const [item] = arr.splice(from, 1); arr.splice(to, 0, item);
+  }
+  function reorderExerciseIds(arr, fromIndex, toIndex) {
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+    const [item] = arr.splice(fromIndex, 1); arr.splice(toIndex, 0, item);
+  }
+
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]'); if (!el) return;
+    const a = el.dataset.action;
+    if (a === 'nav') return mutate(()=>{state.screen = el.dataset.screen;}, null);
+    if (a === 'toggleOnline') return mutate(()=>{state.online=!state.online;}, state.online?'Offline mode enabled. Changes will queue.':'Online mode enabled.');
+    if (a === 'toggleDevice') return mutate(()=>{state.deviceMode = state.deviceMode === 'phone' ? 'desktop' : 'phone';}, null);
+    if (a === 'toggleTheme') return mutate(()=>{state.theme = state.theme === 'dark' ? 'light' : 'dark'; state.settings.themeMode = state.theme;}, null);
+    if (a === 'resetDemo') { if (confirm('Reset the v2 prototype state?')) { state = defaultState(); saveState(); render(); toast('Demo reset.'); } return; }
+    if (a === 'toggleFeedback') return mutate(()=>{state.feedbackOpen=!state.feedbackOpen;}, null);
+    if (a === 'startWorkout') return mutate(()=>{startWorkoutIfNeeded(); state.workout.endedAt=null;}, 'Workout timer started. Persistent ribbon is visible.');
+    if (a === 'endWorkout') return mutate(()=>{state.workout.endedAt=nowIso(); state.workout.activeRest=null;}, 'Workout ended.');
+    if (a === 'selectWorkoutExercise') return mutate(()=>{state.workout.selectedExerciseId = el.dataset.id;}, null);
+    if (a === 'toggleWorkoutCollapse') return mutate(()=>{state.workout[el.dataset.key] = !state.workout[el.dataset.key];}, null);
+    if (a === 'toggleExerciseCollapse') return mutate(()=>{const we=findWorkoutExercise(el.dataset.id); if(we) we.collapsed=!we.collapsed;}, null);
+    if (a === 'toggleSetCollapse') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); const s=we&&findSet(we,el.dataset.set); if(s) s.collapsed=!s.collapsed;}, null);
+    if (a === 'completeExercise') return mutate(()=>{const we=findWorkoutExercise(el.dataset.id); if(we){startWorkoutIfNeeded(); we.sets.forEach(s=>{s.complete=true; if(!s.end) s.end=nowIso();}); we.completed=true; startRestAfterExercise(we);}}, 'Exercise completed. Rest period started before the next exercise.');
+    if (a === 'startNextExercise') return mutate(()=>{const nextId=state.workout.activeRest && state.workout.activeRest.nextExerciseId; if(nextId) state.workout.selectedExerciseId=nextId; state.workout.activeRest=null;}, 'Next exercise selected.');
+    if (a === 'completeSet') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); const s=we&&findSet(we,el.dataset.set); if(s){startWorkoutIfNeeded(); s.complete=el.checked; s.end=s.complete?nowIso():null; if(s.complete && state.settings.autoRest) s.restAfter=Number(state.settings.defaultRestSeconds)||90;}}, null);
+    if (a === 'copyPreviousSet') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); const i=Number(el.dataset.index); if(we && i>0){const prev=we.sets[i-1], cur=we.sets[i]; Object.assign(cur,{reps:prev.reps, load:prev.load, type:prev.type, rir:prev.rir, rpe:prev.rpe});}}, 'Previous set copied.');
+    if (a === 'setType') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); const s=we&&findSet(we,el.dataset.set); if(s) s.type=el.dataset.type;}, null);
+    if (a === 'addSet') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); if(we){const last=we.sets.at(-1)||{reps:10,load:0}; we.sets.push({id:uid('set'),index:we.sets.length+1,reps:last.reps,load:last.load,complete:false,type:'standard',rir:'',rpe:'',note:'',collapsed:false,start:null,end:null,restAfter:null});}}, 'Set added.');
+    if (a === 'selectProgramDay') return mutate(()=>{state.program.selectedDayId=el.dataset.id;}, null);
+    if (a === 'addProgramDay') return mutate(()=>{const n=state.program.days.length+1; const id=uid('day'); state.program.days.push({id,day:n,title:`Custom Day ${n}`,status:'training',notes:'',exercises:[]}); state.program.selectedDayId=id;}, 'Program day added.');
+    if (a === 'generateProgramSuggestion') return mutate(()=>{state.program.days[0].exercises=['incline-db-press','cable-fly','incline-db-curl','bayesian-cable-curl'];}, 'Suggested order applied to Day 1. You can drag after recommendation.');
+    if (a === 'selectProgramExercise') return mutate(()=>{state.program.selectedExerciseId = `${el.dataset.dayId}:${el.dataset.indexId}`;}, null);
+    if (a === 'moveProgramExercise') return mutate(()=>{const d=state.program.days.find(x=>x.id===el.dataset.day); const i=Number(el.dataset.index), dir=el.dataset.dir==='up'?-1:1; if(d) reorderExerciseIds(d.exercises,i,Math.max(0,Math.min(d.exercises.length-1,i+dir)));}, null);
+    if (a === 'removeProgramExercise') return mutate(()=>{const d=state.program.days.find(x=>x.id===el.dataset.day); if(d) d.exercises.splice(Number(el.dataset.index),1);}, 'Exercise removed from program day.');
+    if (a === 'addProgramExercise') return mutate(()=>{const d=state.program.days.find(x=>x.id===el.dataset.day); const sel=document.getElementById('programAddExercise'); if(d && sel) d.exercises.push(sel.value);}, 'Exercise added to program day.');
+    if (a === 'makeRestDay') return mutate(()=>{const d=state.program.days.find(x=>x.id===el.dataset.day); if(d){d.status='rest'; d.exercises=[];}}, 'Day changed to rest.');
+    if (a === 'toggleSkipProgression') return mutate(()=>{state.progression.skipCycle=!state.progression.skipCycle; state.progression.log.push({id:uid('plog'),at:new Date().toISOString().slice(0,10),cycle:state.workout.cycle,exercise:'All exercises',action:state.progression.skipCycle?'Skip cycle enabled':'Skip cycle disabled',detail:'Global cycle-level progression option changed.',usedInAnalytics:true});}, null);
+    if (a === 'recalculateRecommendations') return mutate(()=>{state.workout.exercises.forEach(we=>state.progression.recommendations[we.id]=baseRecommendation(we));}, 'Recommendations recalculated.');
+    if (a === 'acceptRecommendation') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); const ex=we&&exercise(we.exerciseId); const rec=state.progression.recommendations[we.id]; if(we&&ex&&rec){rec.accepted=true; state.progression.log.push({id:uid('plog'),at:new Date().toISOString().slice(0,10),cycle:state.workout.cycle,exercise:ex.name,action:state.progression.skipCycle?'Logged only because cycle skipped':'Accepted as future default',detail:`${rec.sets} sets · ${rec.reps} reps · ${rec.load} load. ${rec.reason}`,usedInAnalytics:true});}}, 'Recommendation logged.');
+    if (a === 'logOneRecommendation') return mutate(()=>{const we=findWorkoutExercise(el.dataset.we); const ex=we&&exercise(we.exerciseId); const rec=state.progression.recommendations[we.id]; if(we&&ex&&rec) state.progression.log.push({id:uid('plog'),at:new Date().toISOString().slice(0,10),cycle:state.workout.cycle,exercise:ex.name,action:'Logged recommendation',detail:`${rec.sets} sets · ${rec.reps} reps · ${rec.load}.`,usedInAnalytics:true});}, 'Recommendation added to detailed log.');
+    if (a === 'logProgressionSnapshot') return mutate(()=>{state.workout.exercises.forEach(we=>{const ex=exercise(we.exerciseId), rec=state.progression.recommendations[we.id]; state.progression.log.push({id:uid('plog'),at:new Date().toISOString().slice(0,10),cycle:state.workout.cycle,exercise:ex.name,action:state.progression.skipCycle?'Cycle skipped / logged':'Snapshot logged',detail:`${rec.sets} sets · ${rec.reps} reps · ${rec.load}.`,usedInAnalytics:true});});}, 'All current recommendations logged.');
+    if (a === 'resolveWarning') return mutate(()=>{const w=state.importReview.warnings.find(x=>x.id===el.dataset.id); if(w) w.status = w.status==='review'?'resolved':'review';}, null);
+    if (a === 'commitImport') return mutate(()=>{state.importReview.committed=true;}, 'Import committed in preview.');
+    if (a === 'exportMockExcel') return exportMockExcel();
+    if (a === 'simulateConflict') return mutate(()=>{state.devices.conflict.open=true; state.devices.conflict.resolved=false;}, null);
+    if (a === 'closeConflict') return mutate(()=>{state.devices.conflict.open=false;}, null);
+    if (a === 'resolveConflict') return mutate(()=>{state.devices.conflict.resolved=true; state.devices.conflict.resolution=el.dataset.version; state.devices.conflict.open=false;}, `Conflict resolved using ${el.dataset.version}.`);
+    if (a === 'terminateSession') return mutate(()=>{const s=state.devices.sessions.find(x=>x.id===el.dataset.id); if(s) s.status='terminated';}, 'Device session terminated.');
+    if (a === 'saveSettings') return mutate(()=>{}, 'Settings saved in preview.');
+    if (a === 'addExerciseDb') return addExerciseDb();
+    if (a === 'deleteExerciseDb') return mutate(()=>{state.exerciseDb = state.exerciseDb.filter(x=>x.id!==el.dataset.id);}, 'Exercise deleted from preview database.');
+    if (a === 'saveFeedback') return mutate(()=>{if(state.feedbackDraft.trim()){state.feedback.push({screen:state.screen,text:state.feedbackDraft.trim(),at:new Date().toISOString()}); state.feedbackDraft='';}}, 'Feedback saved.');
+    if (a === 'exportFeedback') return exportJson('workout-preview-v2-feedback.json', {exportedAt:new Date().toISOString(), feedback:state.feedback});
+  });
+
+  document.addEventListener('input', (e) => {
+    const el = e.target.closest('[data-action]'); if (!el) return;
+    const a = el.dataset.action;
+    if (a === 'workoutNotes') return liveUpdate(()=>{state.workout.notes=el.value;});
+    if (a === 'exerciseNote') return liveUpdate(()=>{const we=findWorkoutExercise(el.dataset.we); if(we) we.note=el.value;});
+    if (a === 'setInput') return liveUpdate(()=>{const we=findWorkoutExercise(el.dataset.we); const s=we&&findSet(we,el.dataset.set); if(s){const field=el.dataset.field; s[field] = ['reps','load','restAfter'].includes(field) ? Number(el.value) : el.value;}});
+    if (a === 'programDayInput') return liveUpdate(()=>{const d=state.program.days.find(x=>x.id===el.dataset.day); if(d){d[el.dataset.field] = el.dataset.field==='day' ? Number(el.value) : el.value;}});
+    if (a === 'recInput') return liveUpdate(()=>{const rec=state.progression.recommendations[el.dataset.we]; if(rec){rec[el.dataset.field]=el.value; rec.edited=true;}});
+    if (a === 'aliasInput') return liveUpdate(()=>{const x=state.importReview.aliases.find(a=>a.id===el.dataset.id); if(x) x.canonical=el.value;});
+    if (a === 'feedbackDraft') return liveUpdate(()=>{state.feedbackDraft=el.value;});
+    if (a === 'exerciseDbInput') return liveUpdate(()=>{const ex=state.exerciseDb.find(x=>x.id===el.dataset.id); if(ex){ex[el.dataset.field]=['increment'].includes(el.dataset.field)?Number(el.value):el.value; if(el.dataset.field==='equipment' && el.value==='bodyweight'){ex.bodyweight=true; ex.increment=0;}}});
+    if (a === 'accentInput') return mutate(()=>{state.accent=el.value;}, null);
+  });
+
+  document.addEventListener('change', (e) => {
+    const el = e.target.closest('[data-action]'); if (!el) return;
+    const a = el.dataset.action;
+    if (['workoutNotes','exerciseNote','setInput','programDayInput','recInput','aliasInput','feedbackDraft','exerciseDbInput'].includes(a)) return render();
+    if (a === 'aliasReview') return mutate(()=>{const x=state.importReview.aliases.find(a=>a.id===el.dataset.id); if(x) x.review=el.checked;}, null);
+    if (a === 'analyticsInput') return mutate(()=>{state.analytics[el.dataset.field]=el.value;}, null);
+    if (a === 'settingInput') return mutate(()=>{state.settings[el.dataset.field] = el.type==='number' ? Number(el.value) : el.value; if(el.dataset.field==='themeMode' && el.value !== 'system') state.theme=el.value;}, null);
+    if (a === 'settingCheckbox') return mutate(()=>{state.settings[el.dataset.field]=el.checked;}, null);
+    if (a === 'densityInput') return mutate(()=>{state.density=el.value;}, null);
+    if (a === 'buttonSizeInput') return mutate(()=>{state.buttonSize=el.value;}, null);
+    if (a === 'fontScaleInput') return mutate(()=>{state.fontScale=el.value;}, null);
+  });
+
+  function addExerciseDb() {
+    const name = document.getElementById('newExerciseName')?.value.trim();
+    const group = document.getElementById('newExerciseGroup')?.value || 'Chest';
+    const equipment = document.getElementById('newExerciseEquipment')?.value || 'other';
+    const unilateral = !!document.getElementById('newExerciseUnilateral')?.checked;
+    const bodyweight = !!document.getElementById('newExerciseBodyweight')?.checked || equipment === 'bodyweight';
+    if (!name) return toast('Enter an exercise name first.');
+    mutate(()=>{state.exerciseDb.push({id:uid('ex'),name,group,equipment,unilateral,bodyweight,increment:bodyweight?0:(equipment==='barbell'?5:2.5),low:8,high:12});}, 'Exercise added to database.');
+  }
+
+  document.addEventListener('dragstart', (e) => {
+    const el = e.target.closest('[draggable="true"]'); if (!el) return;
+    e.dataTransfer.setData('text/plain', JSON.stringify({...el.dataset}));
+    el.classList.add('dragging');
+  });
+  document.addEventListener('dragend', (e) => { const el=e.target.closest('.dragging'); if(el) el.classList.remove('dragging'); document.querySelectorAll('.drag-target').forEach(x=>x.classList.remove('drag-target')); });
+  document.addEventListener('dragover', (e) => { const target=e.target.closest('[draggable="true"]'); if(target){ e.preventDefault(); target.classList.add('drag-target'); } });
+  document.addEventListener('dragleave', (e) => { const target=e.target.closest('.drag-target'); if(target) target.classList.remove('drag-target'); });
+  document.addEventListener('drop', (e) => {
+    const target = e.target.closest('[draggable="true"]'); if (!target) return;
+    e.preventDefault(); target.classList.remove('drag-target');
+    let src; try { src = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+    if (src.dragType === 'workoutExercise' && target.dataset.dragType === 'workoutExercise') {
+      return mutate(()=>{reorderById(state.workout.exercises, src.dragId, target.dataset.dragId);}, 'Workout exercise order updated.');
+    }
+    if (src.dragType === 'programDay' && target.dataset.dragType === 'programDay') {
+      return mutate(()=>{reorderById(state.program.days, src.dragId, target.dataset.dragId); state.program.days.forEach((d,i)=>d.day=i+1);}, 'Program day order updated.');
+    }
+    if (src.dragType === 'programExercise' && target.dataset.dragType === 'programExercise' && src.day === target.dataset.day) {
+      return mutate(()=>{const d=state.program.days.find(x=>x.id===src.day); if(d) reorderExerciseIds(d.exercises, Number(src.index), Number(target.dataset.index));}, 'Program exercise order updated.');
+    }
+  });
+
+  function exportJson(filename, obj) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+  function exportMockExcel() {
+    const rows = [['Sheet','Description'],['Workout Log','Sets, notes, timer data'],['Cycle Summary','Lookback analytics'],['Exercise Tracker','Per-exercise history'],['Progression Log','Recommendation decisions']];
+    const csv = rows.map(r => r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='workout-preview-v2-export-mock.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); toast('Mock Excel-style export downloaded.');
+  }
+
+  render();
+  </script>
+</body>
+</html>

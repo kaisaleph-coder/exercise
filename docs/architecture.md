@@ -1,0 +1,40 @@
+# Architecture
+
+## What Was Built
+
+The project uses a monorepo:
+
+```text
+apps/web       Next.js PWA
+packages/db    Supabase schema, migrations, RLS notes
+packages/importer
+packages/analytics
+packages/progression
+packages/sync
+packages/export
+packages/shared
+```
+
+Supabase Postgres/Auth/RLS is the system of record. PowerSync is the planned offline-first sync layer. Local mock adapters let the app run before external services are configured.
+
+## How To Run It
+
+```powershell
+cd E:\workout-pwa
+npm.cmd run dev
+```
+
+## How To Test It
+
+```powershell
+npm.cmd test
+npm.cmd run build
+```
+
+## What To Review
+
+Review `apps/web/components/app-shell.tsx` for the first usable app shell and `packages/db/migrations/0001_initial_schema.sql` before creating tables in Supabase.
+
+## Common Errors And Fixes
+
+If Supabase is not ready, keep `NEXT_PUBLIC_USE_LOCAL_MOCKS=true`.

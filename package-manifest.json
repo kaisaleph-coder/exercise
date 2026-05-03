@@ -1,0 +1,27 @@
+{
+  "package_name": "workout_pwa_final_codex_package",
+  "created_for": "single-user workout logger PWA Codex implementation",
+  "contains_private_workbook": false,
+  "primary_prompt": "CODEX_SINGLE_MASTER_PROMPT.md",
+  "prototype_reference": "prototype/index.html",
+  "novice_guide": "START_HERE_FOR_NOVICE.md",
+  "canonical_muscle_groups": [
+    "Chest",
+    "Back",
+    "Shoulders",
+    "Biceps",
+    "Triceps",
+    "Core",
+    "Legs"
+  ],
+  "required_stack": [
+    "Next.js",
+    "TypeScript",
+    "Supabase Postgres/Auth/RLS",
+    "PowerSync",
+    "ExcelJS or SheetJS",
+    "Vitest",
+    "Playwright"
+  ],
+  "notes": "The source Excel workbook is intentionally not included. Place it in data/source during importer implementation."
+}

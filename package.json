@@ -1,0 +1,55 @@
+{
+  "name": "workout-pwa",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Offline-first workout logger PWA with Supabase, PowerSync, Excel import/export, analytics, and progression recommendations.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @workout/web",
+    "build": "npm run build -w @workout/web",
+    "lint": "npm run lint -w @workout/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test -c apps/web/playwright.config.ts",
+    "seed:dev": "tsx scripts/seed-dev.ts",
+    "import:log": "tsx scripts/import-log.ts",
+    "export:excel": "tsx scripts/export-excel.ts"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@powersync/web": "^1.24.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.49.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "^15.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "8.5.13",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "postcss": "8.5.13"
+  }
+}
