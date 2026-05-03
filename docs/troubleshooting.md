@@ -51,7 +51,15 @@ NEXT_PUBLIC_USE_LOCAL_MOCKS=true
 Place the private workbook at:
 
 ```text
-data/source/Exercises - Final(2).xlsx
+data/source/Exercises - Final.xlsx
 ```
 
 Do not commit it to GitHub.
+
+Check that Git is ignoring it:
+
+```powershell
+git status --short --ignored data/source
+```
+
+You should see the workbook with `!!`, which means it is ignored.

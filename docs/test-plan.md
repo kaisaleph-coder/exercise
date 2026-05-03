@@ -65,3 +65,5 @@ npm.cmd test
 Current coverage includes importer rules, volume/analytics, progression recommendations, sync conflicts, export sheet modeling, and workout state helpers.
 
 Phase 2 adds coverage for shared Zod schemas, seed data, local mock records, and SQL migration/RLS audit checks.
+
+Phase 3 adds coverage for the actual workbook import preview. If the private workbook is missing, those workbook-specific tests are skipped; when present locally, they verify `Log` sheet parsing, raw/formula preservation, row classification, review-blocking warnings, and normalized preview records.

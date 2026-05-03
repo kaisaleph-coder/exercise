@@ -23,6 +23,14 @@ Phase 2 database/shared-type work is also in place:
 4. Local mock store for user-scoped demo records until Supabase/PowerSync are connected.
 5. Schema tests that audit user-owned tables, RLS coverage, indexes, and seed SQL.
 
+Phase 3 importer preview work has started:
+
+1. The importer reads `data/source/Exercises - Final.xlsx`.
+2. It parses only the `Log` sheet and meaningful `A:Q` rows.
+3. It preserves raw values and formulas for audit.
+4. It classifies rows and generates import review warnings.
+5. It builds normalized workout-day, workout-exercise, and set-log preview records without committing them.
+
 ## How To Run It
 
 Run these commands in this folder:
@@ -61,8 +69,8 @@ npm.cmd run build
 The current verified result is:
 
 ```text
-9 test files passed
-35 tests passed
+10 test files passed
+40 tests passed
 Next.js production build passed
 ```
 
@@ -165,3 +173,5 @@ Do not run `npm audit fix --force` casually because it can introduce breaking de
 ### ExcelJS is not installed yet
 
 The current export package builds the required workbook model, but the real ExcelJS parser/writer will be added during the importer/export implementation phase. This avoids carrying an unused dependency with a vulnerable transitive `uuid` package before the app actually needs it.
+
+The importer preview currently uses `fflate` and `fast-xml-parser` to read `.xlsx` zip/XML content while keeping `npm audit` clean.

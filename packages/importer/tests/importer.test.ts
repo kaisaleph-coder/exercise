@@ -4,8 +4,10 @@ import {
   convertExcelSerialDate,
   extractSetLogs,
   generateImportWarnings,
+  mapSourceMuscleGroup,
   normalizeExerciseAlias,
   parseNoteTags,
+  suggestExerciseAliasReview,
   summarizeImportReview
 } from "../src/index";
 
@@ -46,11 +48,23 @@ describe("Excel Log importer", () => {
 
   it("normalizes obvious aliases and parses useful note tags", () => {
     expect(normalizeExerciseAlias(" Incline DB curl ")).toBe("incline db curl");
+    expect(suggestExerciseAliasReview("Incline DB curl", ["Incline DB Curl"])).toEqual({
+      rawName: "Incline DB curl",
+      suggestedCanonicalName: "Incline DB Curl",
+      confidence: 0.99,
+      needsReview: false
+    });
     expect(parseNoteTags("Home session. Shoulder pain. Drop set on last set.")).toEqual([
       { type: "home", value: "home", confidence: 0.95, needsReview: false },
       { type: "pain", value: "pain", confidence: 0.85, needsReview: true },
       { type: "drop_set", value: "drop set", confidence: 0.9, needsReview: false }
     ]);
+  });
+
+  it("maps source muscle group variants into canonical groups with review flags", () => {
+    expect(mapSourceMuscleGroup("Back - Lats")).toEqual({ source: "Back - Lats", canonical: "Back", confidence: 0.95, needsReview: false });
+    expect(mapSourceMuscleGroup("Shoulders - Rear Delts")).toEqual({ source: "Shoulders - Rear Delts", canonical: "Shoulders", confidence: 0.9, needsReview: false });
+    expect(mapSourceMuscleGroup("Wrists")).toEqual({ source: "Wrists", canonical: "Biceps", confidence: 0.55, needsReview: true });
   });
 
   it("generates review warnings for volume mismatches and rejected rows", () => {

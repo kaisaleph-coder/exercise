@@ -27,6 +27,10 @@
 - [x] Phase 2 demo exercise seed constants exist.
 - [x] Phase 2 local mock store exists and is tested.
 - [x] Phase 2 schema/RLS audit tests exist.
+- [x] Phase 3 workbook import preview reads the uploaded workbook.
+- [x] Phase 3 importer preserves raw values and formulas.
+- [x] Phase 3 importer rejects date serial 0 and ignores template rows.
+- [x] Phase 3 importer blocks commit while review warnings remain.
 
 ## Still Needed For Production
 
