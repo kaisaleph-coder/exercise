@@ -15,6 +15,14 @@ Phase 1 plus tested foundations are in place:
 7. Beginner setup docs and required documentation scaffolding.
 8. Dependency audit cleanup: current install reports zero vulnerabilities.
 
+Phase 2 database/shared-type work is also in place:
+
+1. Shared Zod schemas for preferences and exercise records.
+2. Canonical muscle group seed constants.
+3. Demo exercise seed constants with unilateral/bodyweight metadata.
+4. Local mock store for user-scoped demo records until Supabase/PowerSync are connected.
+5. Schema tests that audit user-owned tables, RLS coverage, indexes, and seed SQL.
+
 ## How To Run It
 
 Run these commands in this folder:
@@ -53,8 +61,8 @@ npm.cmd run build
 The current verified result is:
 
 ```text
-6 test files passed
-25 tests passed
+9 test files passed
+35 tests passed
 Next.js production build passed
 ```
 

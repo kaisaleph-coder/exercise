@@ -63,3 +63,5 @@ npm.cmd test
 ```
 
 Current coverage includes importer rules, volume/analytics, progression recommendations, sync conflicts, export sheet modeling, and workout state helpers.
+
+Phase 2 adds coverage for shared Zod schemas, seed data, local mock records, and SQL migration/RLS audit checks.

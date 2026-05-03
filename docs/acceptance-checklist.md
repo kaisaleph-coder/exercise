@@ -22,6 +22,11 @@
 - [x] Settings include UI configuration and exercise database grouped by muscle group.
 - [x] Beginner docs exist.
 - [x] Current dependency audit reports zero vulnerabilities.
+- [x] Phase 2 shared Zod schemas exist.
+- [x] Phase 2 canonical muscle group seed constants exist.
+- [x] Phase 2 demo exercise seed constants exist.
+- [x] Phase 2 local mock store exists and is tested.
+- [x] Phase 2 schema/RLS audit tests exist.
 
 ## Still Needed For Production
 

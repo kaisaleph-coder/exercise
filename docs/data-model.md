@@ -16,6 +16,14 @@ The migration includes:
 
 Every user-owned table has `user_id`.
 
+Phase 2 also adds shared TypeScript/Zod definitions for preferences and exercises in:
+
+```text
+packages/shared/src/index.ts
+```
+
+The local mock store in `packages/sync/src/index.ts` uses those shared seeds so demo data stays aligned with the database seed rules.
+
 ## How To Run It
 
 Run `packages/db/migrations/0001_initial_schema.sql` in Supabase SQL Editor.
@@ -31,6 +39,14 @@ select name from muscle_groups order by sort_order;
 ## What To Review
 
 Check that bodyweight exercises use `is_bodyweight=true` and `exclude_from_resistance_volume=true`.
+
+Review the Phase 2 schema tests:
+
+```text
+packages/db/tests/schema.test.ts
+packages/shared/tests/shared.test.ts
+packages/sync/tests/local-mock.test.ts
+```
 
 ## Common Errors And Fixes
 
